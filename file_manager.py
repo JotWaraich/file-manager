@@ -18,7 +18,7 @@ class FileManager(QMainWindow):
 
         # Directory path input
         self.path_input = QLineEdit(self)
-        self.path_input.setPlaceholderText("Enter directory path or click 'Open Directory'")
+        self.path_input.setPlaceholderText("Enter directory path and press Enter")
 
         # List widget to display files and folders
         self.list_widget = QListWidget()
@@ -26,13 +26,8 @@ class FileManager(QMainWindow):
         self.list_widget.customContextMenuRequested.connect(self.open_context_menu)
         self.list_widget.itemDoubleClicked.connect(self.navigate)
 
-        # Buttons
-        open_btn = QPushButton('Open Directory')
-        open_btn.clicked.connect(self.open_directory)
-
         # Add widgets to layout
         layout.addWidget(self.path_input)
-        layout.addWidget(open_btn)
         layout.addWidget(self.list_widget)
 
         # Set the main layout
@@ -52,7 +47,9 @@ class FileManager(QMainWindow):
 
     def keyPressEvent(self, event):
         """Handle key press events."""
-        if event.key() == Qt.Key_F2:
+        if event.key() == Qt.Key_Enter or event.key() == Qt.Key_Return:
+            self.open_directory()
+        elif event.key() == Qt.Key_F2:
             self.rename_selected()
         elif event.key() == Qt.Key_Delete:
             if event.modifiers() == Qt.ShiftModifier:
@@ -92,13 +89,15 @@ class FileManager(QMainWindow):
             QMessageBox.critical(self, "Error", f"Failed to open file: {e}")
 
     def open_directory(self):
-        directory = QFileDialog.getExistingDirectory(self, 'Select Directory')
-        if directory:
+        directory = self.path_input.text()
+        if os.path.isdir(directory):
             current_path = self.path_input.text()
             if current_path:
                 self.history.append(current_path)  # Add current path to history before opening new directory
             self.path_input.setText(directory)
             self.list_files(directory)
+        else:
+            QMessageBox.warning(self, "Invalid Directory", "The specified path is not a valid directory.")
 
     def list_files(self, directory):
         self.list_widget.clear()
@@ -234,8 +233,8 @@ class FileManager(QMainWindow):
 
     def create_new_file(self):
         """Create a new file with a specified format."""
-        file_formats = ['.txt', '.csv', '.md', '.py', '.html', '.json', '.xml', '.yaml', '.java', '.cpp', '.c', '.sh', '.bat']
-        new_file_name, ok = QInputDialog.getText(self, "Create New File", "Enter new file name (without extension):")
+        file_formats = ['.txt', '.csv', '.md', '.py', '.html', '.json', '.xml', '.yaml', '.java', '.cpp', '.c', '.sh', '.js']
+        new_file_name, ok = QInputDialog.getText(self, "Create New File", "Enter file name (without extension):")
         if ok and new_file_name:
             file_format, ok = QInputDialog.getItem(self, "Select File Format", "Choose file format:", file_formats, 0, False)
             if ok:
