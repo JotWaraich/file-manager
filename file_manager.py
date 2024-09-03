@@ -1,12 +1,12 @@
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QVBoxLayout, QWidget,
+    QPushButton, QListWidget, QMenu, QAction, QMessageBox, QLineEdit, QInputDialog, QHBoxLayout
+)
+from PyQt5.QtCore import Qt
 import sys
 import os
 import shutil
 import subprocess
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QFileDialog, QVBoxLayout, QWidget,
-    QPushButton, QListWidget, QMenu, QAction, QMessageBox, QLineEdit, QInputDialog
-)
-from PyQt5.QtCore import Qt
 
 class FileManager(QMainWindow):
     def __init__(self):
@@ -16,9 +16,20 @@ class FileManager(QMainWindow):
 
         layout = QVBoxLayout()
 
+        # Create a layout for the path input and back button
+        path_layout = QHBoxLayout()
+
+        # Back button
+        self.back_button = QPushButton("Back", self)
+        self.back_button.clicked.connect(self.go_back)
+
         # Directory path input
         self.path_input = QLineEdit(self)
         self.path_input.setPlaceholderText("Enter directory path and press Enter")
+
+        # Add widgets to path layout
+        path_layout.addWidget(self.back_button)
+        path_layout.addWidget(self.path_input)
 
         # List widget to display files and folders
         self.list_widget = QListWidget()
@@ -47,23 +58,18 @@ class FileManager(QMainWindow):
             }
         """)
 
-        # Add widgets to layout
-        layout.addWidget(self.path_input)
+        # Add widgets to main layout
+        layout.addLayout(path_layout)
         layout.addWidget(self.list_widget)
 
-        # Set the main layout
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
 
-        # Variables to hold copied/cut file paths
         self.copied_file = None
         self.cut_file = None
-
-        # Stack to store navigation history
         self.history = []
 
-        # Show drives on startup
         self.show_drives()
 
     def keyPressEvent(self, event):
@@ -91,12 +97,10 @@ class FileManager(QMainWindow):
     def navigate(self, item):
         """Navigate into a directory or drive, or go back if the three-dot button is clicked."""
         path = item.text()
-        if path == "...":
-            self.go_back()
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             current_path = self.path_input.text()
             if current_path:
-                self.history.append(current_path)  # Add current path to history before navigating
+                self.history.append(current_path)
             self.path_input.setText(path)
             self.list_files(path)
         else:
@@ -124,7 +128,6 @@ class FileManager(QMainWindow):
         self.list_widget.clear()
         try:
             # Add a three-dot item to go back to the previous directory
-            self.list_widget.addItem("...")
             for filename in os.listdir(directory):
                 self.list_widget.addItem(os.path.join(directory, filename))
         except Exception as e:
