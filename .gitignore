@@ -1,3 +1,4 @@
 dist/*
 build/*
 logo.ico
+test.py

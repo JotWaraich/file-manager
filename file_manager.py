@@ -26,6 +26,27 @@ class FileManager(QMainWindow):
         self.list_widget.customContextMenuRequested.connect(self.open_context_menu)
         self.list_widget.itemDoubleClicked.connect(self.navigate)
 
+        self.list_widget.setStyleSheet("""
+            QListWidget {
+                background-color: #F0F0F0;
+                border: 2px solid #C0C0C0;
+                font-size: 16px;
+            }
+            QListWidget::item {
+                background-color: #FFFFFF;
+                padding: 10px;
+                margin: 5px;
+                border: 1px solid #C0C0C0;
+            }
+            QListWidget::item:selected {
+                background-color: #007BFF;
+                color: white;
+            }
+            QListWidget::item:hover {
+                background-color: #E0E0E0;
+            }
+        """)
+
         # Add widgets to layout
         layout.addWidget(self.path_input)
         layout.addWidget(self.list_widget)
@@ -215,13 +236,26 @@ class FileManager(QMainWindow):
     def rename_selected(self):
         filepath = self.get_selected_path()
         if filepath:
-            # Extract the original file extension
+        # Check if the selected path is a directory
+            if os.path.isdir(filepath):
+                # If it's a directory, prompt the user for the new name without worrying about extensions
+                new_name, ok = QInputDialog.getText(self, "Rename Folder", "Enter new folder name:", text=os.path.basename(filepath))
+                if ok and new_name:
+                    new_path = os.path.join(os.path.dirname(filepath), new_name)
+                    try:
+                        os.rename(filepath, new_path)
+                        self.list_files(self.path_input.text())
+                        QMessageBox.information(self, "Success", "Folder renamed successfully")
+                    except Exception as e:
+                        QMessageBox.critical(self, "Error", f"Failed to rename folder: {e}")
+        else:
+            # If it's a file, extract the original file extension
             file_dir = os.path.dirname(filepath)
             file_name, file_extension = os.path.splitext(os.path.basename(filepath))
-            
+
             # Prompt the user for the new name without the extension
             new_name, ok = QInputDialog.getText(self, "Rename File", "Enter new file name (without extension):", text=file_name)
-            
+
             if ok and new_name:
                 new_path = os.path.join(file_dir, new_name + file_extension)  # Add the original extension back
                 try:
